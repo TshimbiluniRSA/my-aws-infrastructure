@@ -1,21 +1,19 @@
-name: Terraform Plan
+name: Terraform Apply
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "environments/**"
-      - "modules/**"
-      - ".github/workflows/terraform-plan.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: terraform-production
+  cancel-in-progress: false
+
 jobs:
-  terraform-plan:
-    if: github.head_ref == 'dev'
+  terraform-apply:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     defaults:
@@ -29,7 +27,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::277052498943:role/GitHubTerraformPlanRole
+          role-to-assume: arn:aws:iam::277052498943:role/GitHubTerraformApplyRole
           aws-region: eu-west-1
 
       - name: Set up Terraform
@@ -47,4 +45,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform plan
-        run: terraform plan -input=false -no-color
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve tfplan
