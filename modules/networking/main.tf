@@ -85,6 +85,22 @@ resource "aws_subnet" "private" {
   }
 }
 
+resource "aws_db_subnet_group" "rds" {
+  name        = "${var.name}-rds-subnet-group"
+  description = "Private subnet group for the portfolio PostgreSQL RDS database"
+  subnet_ids = [
+    for availability_zone in var.availability_zones :
+    aws_subnet.private[availability_zone].id
+  ]
+
+  tags = {
+    Name        = "${var.name}-rds-subnet-group"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Tier        = "database"
+  }
+}
+
 resource "aws_security_group" "ec2" {
   name        = "${var.name}-ec2-sg"
   description = "Protects the portfolio application EC2 instance"
