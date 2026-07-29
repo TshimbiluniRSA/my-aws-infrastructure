@@ -32,3 +32,13 @@ output "private_subnet_ids" {
   description = "IDs of the production private subnets"
   value       = module.networking.private_subnet_ids
 }
+
+output "ec2_security_group_id" {
+  description = "ID of the production application EC2 security group"
+  value       = module.networking.ec2_security_group_id
+}
+
+output "rds_security_group_id" {
+  description = "ID of the production PostgreSQL RDS security group"
+  value       = module.networking.rds_security_group_id
+}

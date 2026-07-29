@@ -37,3 +37,13 @@ output "private_subnet_cidrs" {
   description = "IPv4 CIDR blocks of the private subnets ordered consistently with availability_zones"
   value       = [for availability_zone in var.availability_zones : aws_subnet.private[availability_zone].cidr_block]
 }
+
+output "ec2_security_group_id" {
+  description = "ID of the security group protecting the portfolio application EC2 instance"
+  value       = aws_security_group.ec2.id
+}
+
+output "rds_security_group_id" {
+  description = "ID of the security group protecting the private PostgreSQL RDS database"
+  value       = aws_security_group.rds.id
+}
