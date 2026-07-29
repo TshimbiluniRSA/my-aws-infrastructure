@@ -19,8 +19,8 @@ variable "availability_zones" {
   type        = list(string)
 
   validation {
-    condition     = length(var.availability_zones) == 2
-    error_message = "Exactly two Availability Zones must be provided."
+    condition     = length(var.availability_zones) == 2 && length(distinct(var.availability_zones)) == 2
+    error_message = "Exactly two distinct Availability Zones must be provided."
   }
 }
 
@@ -29,8 +29,8 @@ variable "public_subnet_cidrs" {
   type        = list(string)
 
   validation {
-    condition     = length(var.public_subnet_cidrs) == 2
-    error_message = "Exactly two public subnet CIDR blocks must be provided."
+    condition     = length(var.public_subnet_cidrs) == 2 && length(distinct(var.public_subnet_cidrs)) == 2
+    error_message = "Exactly two distinct public subnet CIDR blocks must be provided."
   }
 }
 
@@ -39,7 +39,7 @@ variable "private_subnet_cidrs" {
   type        = list(string)
 
   validation {
-    condition     = length(var.private_subnet_cidrs) == 2
-    error_message = "Exactly two private subnet CIDR blocks must be provided."
+    condition     = length(var.private_subnet_cidrs) == 2 && length(distinct(var.private_subnet_cidrs)) == 2
+    error_message = "Exactly two distinct private subnet CIDR blocks must be provided."
   }
 }
