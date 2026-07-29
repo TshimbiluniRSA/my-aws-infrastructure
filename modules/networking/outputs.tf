@@ -8,6 +8,16 @@ output "vpc_cidr" {
   value       = aws_vpc.this.cidr_block
 }
 
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway attached to the VPC"
+  value       = aws_internet_gateway.this.id
+}
+
+output "public_route_table_id" {
+  description = "ID of the public route table"
+  value       = aws_route_table.public.id
+}
+
 output "public_subnet_ids" {
   description = "IDs of the public subnets ordered consistently with availability_zones"
   value       = [for availability_zone in var.availability_zones : aws_subnet.public[availability_zone].id]

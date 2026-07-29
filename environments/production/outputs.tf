@@ -13,6 +13,16 @@ output "vpc_id" {
   value       = module.networking.vpc_id
 }
 
+output "internet_gateway_id" {
+  description = "ID of the production Internet Gateway"
+  value       = module.networking.internet_gateway_id
+}
+
+output "public_route_table_id" {
+  description = "ID of the production public route table"
+  value       = module.networking.public_route_table_id
+}
+
 output "public_subnet_ids" {
   description = "IDs of the production public subnets"
   value       = module.networking.public_subnet_ids
