@@ -84,3 +84,75 @@ resource "aws_subnet" "private" {
     Tier        = "private"
   }
 }
+
+resource "aws_security_group" "ec2" {
+  name        = "${var.name}-ec2-sg"
+  description = "Protects the portfolio application EC2 instance"
+  vpc_id      = aws_vpc.this.id
+
+  tags = {
+    Name        = "${var.name}-ec2-sg"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Tier        = "application"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_http" {
+  security_group_id = aws_security_group.ec2.id
+  description       = "Allow public HTTP traffic to the portfolio application"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 80
+  ip_protocol = "tcp"
+  to_port     = 80
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_https" {
+  security_group_id = aws_security_group.ec2.id
+  description       = "Allow public HTTPS traffic to the portfolio application"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 443
+  ip_protocol = "tcp"
+  to_port     = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "ec2_all_ipv4" {
+  security_group_id = aws_security_group.ec2.id
+  description       = "Allow all outbound IPv4 traffic"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_security_group" "rds" {
+  name        = "${var.name}-rds-sg"
+  description = "Protects the private portfolio PostgreSQL RDS database"
+  vpc_id      = aws_vpc.this.id
+
+  tags = {
+    Name        = "${var.name}-rds-sg"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Tier        = "database"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "rds_postgresql_from_ec2" {
+  security_group_id            = aws_security_group.rds.id
+  referenced_security_group_id = aws_security_group.ec2.id
+  description                  = "Allow PostgreSQL traffic only from the application EC2 security group"
+
+  from_port   = 5432
+  ip_protocol = "tcp"
+  to_port     = 5432
+}
+
+resource "aws_vpc_security_group_egress_rule" "rds_all_ipv4" {
+  security_group_id = aws_security_group.rds.id
+  description       = "Allow all outbound IPv4 traffic"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
