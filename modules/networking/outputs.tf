@@ -28,6 +28,11 @@ output "private_subnet_ids" {
   value       = [for availability_zone in var.availability_zones : aws_subnet.private[availability_zone].id]
 }
 
+output "rds_db_subnet_group_name" {
+  description = "Name of the DB subnet group for the private PostgreSQL RDS database"
+  value       = aws_db_subnet_group.rds.name
+}
+
 output "public_subnet_cidrs" {
   description = "IPv4 CIDR blocks of the public subnets ordered consistently with availability_zones"
   value       = [for availability_zone in var.availability_zones : aws_subnet.public[availability_zone].cidr_block]
