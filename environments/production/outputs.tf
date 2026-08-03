@@ -47,3 +47,33 @@ output "rds_security_group_id" {
   description = "ID of the production PostgreSQL RDS security group"
   value       = module.networking.rds_security_group_id
 }
+
+output "postgres_endpoint" {
+  description = "Connection endpoint for the production PostgreSQL database, including the port."
+  value       = module.database.db_endpoint
+}
+
+output "postgres_address" {
+  description = "DNS address of the production PostgreSQL database."
+  value       = module.database.db_address
+}
+
+output "postgres_port" {
+  description = "Port on which the production PostgreSQL database accepts connections."
+  value       = module.database.db_port
+}
+
+output "postgres_database_name" {
+  description = "Name of the initial production PostgreSQL database."
+  value       = module.database.db_name
+}
+
+output "postgres_master_username" {
+  description = "Master username for the production PostgreSQL database."
+  value       = module.database.master_username
+}
+
+output "postgres_master_user_secret_arn" {
+  description = "ARN of the AWS-managed secret containing the production PostgreSQL master credentials."
+  value       = module.database.master_user_secret_arn
+}
