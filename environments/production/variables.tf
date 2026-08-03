@@ -58,9 +58,17 @@ variable "postgres_master_username" {
 }
 
 variable "postgres_backup_retention_period" {
-  description = "Number of days to retain production PostgreSQL automated backups."
+  description = "Number of days to retain automated PostgreSQL backups."
   type        = number
-  default     = 7
+  default     = 1
+
+  validation {
+    condition = (
+      var.postgres_backup_retention_period >= 1 &&
+      var.postgres_backup_retention_period <= 35
+    )
+    error_message = "PostgreSQL backup retention must be between 1 and 35 days."
+  }
 }
 
 variable "postgres_deletion_protection" {
