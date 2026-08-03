@@ -1,0 +1,6 @@
+# Reauthenticate to AWS, then list engine versions currently available in eu-west-1:
+# aws rds describe-db-engine-versions --region eu-west-1 --engine postgres \
+#   --query 'DBEngineVersions[?Status==`available`].EngineVersion' --output text
+#
+# Set a version from that regional catalog before planning or applying:
+# postgres_engine_version = "REPLACE_WITH_CONFIRMED_VERSION"
