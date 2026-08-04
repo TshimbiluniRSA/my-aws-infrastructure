@@ -48,6 +48,41 @@ output "rds_security_group_id" {
   value       = module.networking.rds_security_group_id
 }
 
+output "ec2_instance_id" {
+  description = "ID of the production portfolio EC2 instance."
+  value       = module.compute.instance_id
+}
+
+output "ec2_private_ip" {
+  description = "Private IPv4 address of the production portfolio EC2 instance."
+  value       = module.compute.instance_private_ip
+}
+
+output "ec2_availability_zone" {
+  description = "Availability Zone of the production portfolio EC2 instance."
+  value       = module.compute.instance_availability_zone
+}
+
+output "ec2_instance_profile_name" {
+  description = "Name of the IAM instance profile attached to the production portfolio EC2 instance."
+  value       = module.compute.instance_profile_name
+}
+
+output "ec2_iam_role_name" {
+  description = "Name of the production portfolio EC2 IAM role."
+  value       = module.compute.iam_role_name
+}
+
+output "ec2_elastic_ip" {
+  description = "Stable public Elastic IP address of the production portfolio EC2 instance."
+  value       = module.compute.elastic_ip
+}
+
+output "ec2_ami_id" {
+  description = "Amazon Linux 2023 AMI ID used by the production portfolio EC2 instance."
+  value       = module.compute.ami_id
+}
+
 output "postgres_endpoint" {
   description = "Connection endpoint for the production PostgreSQL database, including the port."
   value       = module.database.db_endpoint

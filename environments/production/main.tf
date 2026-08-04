@@ -25,6 +25,24 @@ module "networking" {
   ]
 }
 
+module "compute" {
+  source = "../../modules/compute"
+
+  name        = "portfolio-production"
+  environment = var.environment
+
+  instance_type = var.ec2_instance_type
+
+  subnet_id = module.networking.public_subnet_ids[0]
+
+  security_group_ids = [
+    module.networking.ec2_security_group_id,
+  ]
+
+  root_volume_size           = var.ec2_root_volume_size
+  enable_detailed_monitoring = var.ec2_enable_detailed_monitoring
+}
+
 module "database" {
   source = "../../modules/database"
 
