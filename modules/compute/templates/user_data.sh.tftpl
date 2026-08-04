@@ -21,6 +21,11 @@ docker compose version
 
 systemctl enable docker
 systemctl start docker
+
+if ! id -u ssm-user >/dev/null 2>&1; then
+  useradd --create-home --shell /bin/bash ssm-user
+fi
+
 usermod -aG docker ssm-user
 
 systemctl enable nginx
