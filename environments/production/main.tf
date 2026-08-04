@@ -41,6 +41,7 @@ module "compute" {
 
   root_volume_size           = var.ec2_root_volume_size
   enable_detailed_monitoring = var.ec2_enable_detailed_monitoring
+  application_directory      = "/opt/portfolio"
 }
 
 module "database" {

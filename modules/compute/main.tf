@@ -49,6 +49,10 @@ resource "aws_instance" "this" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.security_group_ids
   iam_instance_profile   = aws_iam_instance_profile.ec2.name
+  user_data = templatefile("${path.module}/templates/user_data.sh.tftpl", {
+    application_directory = var.application_directory
+  })
+  user_data_replace_on_change = false
 
   associate_public_ip_address = false
   monitoring                  = var.enable_detailed_monitoring
