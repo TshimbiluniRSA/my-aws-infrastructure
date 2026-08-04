@@ -44,3 +44,14 @@ variable "enable_detailed_monitoring" {
   type        = bool
   default     = false
 }
+
+variable "application_directory" {
+  description = "Base directory used to host the portfolio backend application."
+  type        = string
+  default     = "/opt/portfolio"
+
+  validation {
+    condition     = startswith(var.application_directory, "/")
+    error_message = "application_directory must be an absolute path."
+  }
+}

@@ -1,0 +1,52 @@
+#!/bin/bash
+set -euxo pipefail
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+APPLICATION_DIRECTORY=${jsonencode(application_directory)}
+DOCKER_COMPOSE_VERSION="v5.1.4"
+DOCKER_COMPOSE_PLUGIN_DIRECTORY="/usr/local/lib/docker/cli-plugins"
+
+dnf makecache --refresh
+dnf install -y docker git nginx
+
+if ! docker compose version >/dev/null 2>&1; then
+  install -d -m 0755 "$DOCKER_COMPOSE_PLUGIN_DIRECTORY"
+  curl -fL \
+    "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-linux-x86_64" \
+    -o "$DOCKER_COMPOSE_PLUGIN_DIRECTORY/docker-compose"
+  chmod 0755 "$DOCKER_COMPOSE_PLUGIN_DIRECTORY/docker-compose"
+fi
+
+docker compose version
+
+systemctl enable docker
+systemctl start docker
+usermod -aG docker ssm-user
+
+systemctl enable nginx
+systemctl start nginx
+
+install -d -m 0755 \
+  "$APPLICATION_DIRECTORY" \
+  "$APPLICATION_DIRECTORY/backend" \
+  "$APPLICATION_DIRECTORY/config" \
+  "$APPLICATION_DIRECTORY/logs"
+
+chown ssm-user:ssm-user \
+  "$APPLICATION_DIRECTORY" \
+  "$APPLICATION_DIRECTORY/backend" \
+  "$APPLICATION_DIRECTORY/config" \
+  "$APPLICATION_DIRECTORY/logs"
+
+# Close and reopen the current SSM session before running Docker commands
+# without sudo so that the new docker group membership takes effect.
+#
+# Post-apply checks (run on the instance through a new SSM session):
+# systemctl status docker --no-pager
+# systemctl status nginx --no-pager
+# docker --version
+# docker compose version
+# git --version
+# curl -I http://localhost
+# ls -la /opt/portfolio
+# cat /var/log/user-data.log
