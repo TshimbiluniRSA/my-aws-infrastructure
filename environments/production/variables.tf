@@ -21,6 +21,24 @@ variable "environment" {
   default     = "production"
 }
 
+variable "ec2_instance_type" {
+  description = "Instance type used by the production portfolio backend server."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "ec2_root_volume_size" {
+  description = "Size in GiB of the EC2 root gp3 volume."
+  type        = number
+  default     = 16
+}
+
+variable "ec2_enable_detailed_monitoring" {
+  description = "Whether EC2 detailed monitoring is enabled."
+  type        = bool
+  default     = false
+}
+
 variable "postgres_engine_version" {
   description = "PostgreSQL engine version used by the production RDS instance."
   type        = string
