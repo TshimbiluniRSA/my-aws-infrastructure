@@ -79,7 +79,7 @@ output "ec2_elastic_ip" {
 }
 
 output "ec2_ami_id" {
-  description = "Amazon Linux 2023 AMI ID used by the production portfolio EC2 instance."
+  description = "AMI ID used by the production EC2 instance."
   value       = module.compute.ami_id
 }
 
