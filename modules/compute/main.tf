@@ -108,7 +108,7 @@ resource "aws_instance" "this" {
   })
   user_data_replace_on_change = false
 
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   monitoring                  = var.enable_detailed_monitoring
 
   metadata_options {
