@@ -55,3 +55,37 @@ variable "application_directory" {
     error_message = "application_directory must be an absolute path."
   }
 }
+
+variable "rds_secret_arn" {
+  description = "ARN of the RDS-managed master credential secret the application may read."
+  type        = string
+}
+
+variable "s3_bucket_arn" {
+  description = "ARN of the private S3 bucket used by the CV workflow."
+  type        = string
+}
+
+variable "s3_public_cv_key" {
+  description = "Object key of the permanent downloadable CV."
+  type        = string
+
+  validation {
+    condition     = var.s3_public_cv_key != "" && !startswith(var.s3_public_cv_key, "/")
+    error_message = "s3_public_cv_key must not be empty or begin with a slash."
+  }
+}
+
+variable "s3_upload_prefix" {
+  description = "Object key prefix for temporary visitor CV uploads."
+  type        = string
+
+  validation {
+    condition = (
+      var.s3_upload_prefix != "" &&
+      !startswith(var.s3_upload_prefix, "/") &&
+      !endswith(var.s3_upload_prefix, "/")
+    )
+    error_message = "s3_upload_prefix must not be empty or begin or end with a slash."
+  }
+}

@@ -25,6 +25,19 @@ module "networking" {
   ]
 }
 
+module "storage" {
+  source = "../../modules/storage"
+
+  bucket_name_prefix = var.cv_bucket_name_prefix
+  aws_account_id     = data.aws_caller_identity.current.account_id
+  environment        = var.environment
+
+  force_destroy = var.cv_bucket_force_destroy
+
+  public_cv_key = var.cv_public_key
+  upload_prefix = var.cv_upload_prefix
+}
+
 module "compute" {
   source = "../../modules/compute"
 
@@ -42,6 +55,11 @@ module "compute" {
   root_volume_size           = var.ec2_root_volume_size
   enable_detailed_monitoring = var.ec2_enable_detailed_monitoring
   application_directory      = "/opt/portfolio"
+
+  rds_secret_arn   = module.database.master_user_secret_arn
+  s3_bucket_arn    = module.storage.bucket_arn
+  s3_public_cv_key = module.storage.public_cv_key
+  s3_upload_prefix = module.storage.upload_prefix
 }
 
 module "database" {

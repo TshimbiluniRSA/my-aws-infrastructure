@@ -47,3 +47,8 @@ output "ami_id" {
   description = "AMI ID used by the EC2 instance."
   value       = nonsensitive(data.aws_ssm_parameter.amazon_linux_2023_ami.value)
 }
+
+output "application_policy_arn" {
+  description = "ARN of the least-privilege IAM policy attached to the EC2 application role."
+  value       = aws_iam_policy.ec2_application_access.arn
+}

@@ -39,6 +39,30 @@ variable "ec2_enable_detailed_monitoring" {
   default     = false
 }
 
+variable "cv_bucket_name_prefix" {
+  description = "Globally unique prefix used for the private portfolio CV bucket."
+  type        = string
+  default     = "tshimbiluni-portfolio-cv-production"
+}
+
+variable "cv_bucket_force_destroy" {
+  description = "Whether Terraform may delete the CV bucket while it contains objects."
+  type        = bool
+  default     = false
+}
+
+variable "cv_public_key" {
+  description = "S3 object key used for the permanent downloadable CV."
+  type        = string
+  default     = "cv/public/tshimbiluni-nedambale-cv.pdf"
+}
+
+variable "cv_upload_prefix" {
+  description = "S3 prefix used for temporary visitor CV uploads."
+  type        = string
+  default     = "cv/uploads"
+}
+
 variable "postgres_engine_version" {
   description = "PostgreSQL engine version used by the production RDS instance."
   type        = string

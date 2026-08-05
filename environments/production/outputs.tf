@@ -112,3 +112,28 @@ output "postgres_master_user_secret_arn" {
   description = "ARN of the AWS-managed secret containing the production PostgreSQL master credentials."
   value       = module.database.master_user_secret_arn
 }
+
+output "cv_bucket_name" {
+  description = "Name of the private production CV bucket."
+  value       = module.storage.bucket_name
+}
+
+output "cv_bucket_arn" {
+  description = "ARN of the private production CV bucket."
+  value       = module.storage.bucket_arn
+}
+
+output "cv_public_key" {
+  description = "Object key used for the permanent downloadable CV."
+  value       = module.storage.public_cv_key
+}
+
+output "cv_upload_prefix" {
+  description = "Object key prefix used for temporary visitor CV uploads."
+  value       = module.storage.upload_prefix
+}
+
+output "ec2_application_policy_arn" {
+  description = "ARN of the least-privilege IAM policy attached to the EC2 application role."
+  value       = module.compute.application_policy_arn
+}
