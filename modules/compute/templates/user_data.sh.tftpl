@@ -21,7 +21,12 @@ docker compose version
 
 systemctl enable docker
 systemctl start docker
-usermod -aG docker ssm-user
+
+if id -u ssm-user >/dev/null 2>&1; then
+  usermod -aG docker ssm-user
+else
+  echo "ssm-user does not exist yet; Session Manager will create it on first session."
+fi
 
 systemctl enable nginx
 systemctl start nginx
@@ -32,11 +37,15 @@ install -d -m 0755 \
   "$APPLICATION_DIRECTORY/config" \
   "$APPLICATION_DIRECTORY/logs"
 
-chown ssm-user:ssm-user \
-  "$APPLICATION_DIRECTORY" \
-  "$APPLICATION_DIRECTORY/backend" \
-  "$APPLICATION_DIRECTORY/config" \
-  "$APPLICATION_DIRECTORY/logs"
+if id -u ssm-user >/dev/null 2>&1; then
+  chown ssm-user:ssm-user \
+    "$APPLICATION_DIRECTORY" \
+    "$APPLICATION_DIRECTORY/backend" \
+    "$APPLICATION_DIRECTORY/config" \
+    "$APPLICATION_DIRECTORY/logs"
+else
+  echo "Skipping application directory ownership; ssm-user does not exist yet."
+fi
 
 # Close and reopen the current SSM session before running Docker commands
 # without sudo so that the new docker group membership takes effect.

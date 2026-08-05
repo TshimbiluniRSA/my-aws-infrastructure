@@ -31,6 +31,60 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+data "aws_iam_policy_document" "ec2_application_access" {
+  statement {
+    sid = "ReadRDSManagedSecret"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+
+    resources = [var.rds_secret_arn]
+  }
+
+  statement {
+    sid       = "GetCVBucketLocation"
+    actions   = ["s3:GetBucketLocation"]
+    resources = [var.s3_bucket_arn]
+  }
+
+  statement {
+    sid       = "ReadPermanentCV"
+    actions   = ["s3:GetObject"]
+    resources = ["${var.s3_bucket_arn}/${var.s3_public_cv_key}"]
+  }
+
+  statement {
+    sid = "ManageTemporaryCVUploads"
+
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+
+    resources = ["${var.s3_bucket_arn}/${var.s3_upload_prefix}/*"]
+  }
+}
+
+resource "aws_iam_policy" "ec2_application_access" {
+  name   = "${var.name}-ec2-application-access"
+  policy = data.aws_iam_policy_document.ec2_application_access.json
+
+  tags = {
+    Name        = "${var.name}-ec2-application-access"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Tier        = "application"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_application_access" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_application_access.arn
+}
+
 resource "aws_iam_instance_profile" "ec2" {
   name = "${var.name}-ec2-instance-profile"
   role = aws_iam_role.ec2.name
@@ -54,7 +108,7 @@ resource "aws_instance" "this" {
   })
   user_data_replace_on_change = false
 
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   monitoring                  = var.enable_detailed_monitoring
 
   metadata_options {
@@ -76,6 +130,10 @@ resource "aws_instance" "this" {
       ManagedBy   = "Terraform"
       Tier        = "application"
     }
+  }
+
+  lifecycle {
+    ignore_changes = [user_data]
   }
 
   tags = {
