@@ -2,49 +2,79 @@ name: Terraform Plan
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "environments/**"
       - "modules/**"
       - ".github/workflows/terraform-plan.yml"
+      - ".github/workflows/terraform-apply.yml"
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  terraform-plan:
+  detect-changes:
     if: github.head_ref == 'dev'
     runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.detect.outputs.environments }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Select Terraform environments
+        id: detect
+        shell: bash
+        run: |
+          production=false
+          waazi=false
+          while IFS= read -r file; do
+            case "$file" in
+              modules/*|.github/workflows/terraform-plan.yml|.github/workflows/terraform-apply.yml)
+                production=true; waazi=true ;;
+              environments/production/*)
+                production=true ;;
+              environments/waazi-mvp1/*)
+                waazi=true ;;
+            esac
+          done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
 
+          if [[ "$production" == true && "$waazi" == true ]]; then
+            environments='["production","waazi-mvp1"]'
+          elif [[ "$production" == true ]]; then
+            environments='["production"]'
+          elif [[ "$waazi" == true ]]; then
+            environments='["waazi-mvp1"]'
+          else
+            environments='[]'
+          fi
+          echo "environments=$environments" >> "$GITHUB_OUTPUT"
+
+  terraform-plan:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.environments != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.detect-changes.outputs.environments) }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-${{ matrix.environment }}
+      cancel-in-progress: false
     defaults:
       run:
-        working-directory: environments/production
-
+        working-directory: environments/${{ matrix.environment }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::277052498943:role/GitHubTerraformPlanRole
           aws-region: eu-west-1
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.15.8
-
-      - name: Terraform format check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform initialise
-        run: terraform init -input=false
-
-      - name: Terraform validate
-        run: terraform validate
-
-      - name: Terraform plan
-        run: terraform plan -input=false -no-color
+      - run: terraform fmt -check -recursive
+      - run: terraform init -input=false
+      - run: terraform validate
+      - run: terraform plan -input=false -no-color

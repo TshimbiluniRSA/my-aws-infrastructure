@@ -1,4 +1,4 @@
-# Portfolio Infrastructure
+# Portfolio and Waazi AWS Infrastructure
 
 [![Terraform](https://img.shields.io/badge/terraform-managed-623CE4)](environments/production)
 [![AWS](https://img.shields.io/badge/AWS-eu--west--1-FF9900)](modules)
@@ -13,6 +13,8 @@
 ## Project Purpose
 
 This repository manages the AWS production infrastructure for my AI-powered software engineering portfolio.
+
+It also defines the isolated Waazi MVP 1 workload. Portfolio remains the live owner of the shared VPC; Waazi consumes only the exported VPC and subnet IDs through read-only Terraform remote state.
 
 Terraform defines the infrastructure in AWS `eu-west-1`, while GitHub Actions uses AWS OpenID Connect (OIDC) to plan and apply infrastructure changes without storing long-lived AWS access keys.
 
@@ -400,7 +402,89 @@ The core production platform is now deployed: networking, private RDS, EC2, SSM,
 * Referencing one security group from another expresses application-to-database trust without maintaining changing IP allowlists.
 * OIDC gives CI jobs short-lived AWS credentials and avoids storing reusable access keys in GitHub.
 * Reviewing a Terraform plan before apply makes proposed production changes visible before they are executed.
-* AWS Free plan limitations can shape design choices; in this environment they currently constrain automated backup retention to one day.
+* AWS Free plan economics can shape retention decisions, but RDS technically supports longer retention; Portfolio's one-day setting is a cost/lifecycle choice rather than an AWS account restriction.
+
+## Waazi MVP 1
+
+Waazi is a separate workload inside the Portfolio-owned VPC:
+
+```text
+Shared AWS VPC (owned by production/terraform.tfstate)
+├── Portfolio (live): EC2, RDS, S3
+└── Waazi MVP 1: EC2, RDS, Secrets Manager
+```
+
+Portfolio remains in `environments/production` with state key `production/terraform.tfstate`. Waazi lives in `environments/waazi-mvp1` with state key `waazi-mvp1/terraform.tfstate`. Both use the existing state bucket, but no resource is jointly managed. Waazi reads only `vpc_id`, `public_subnet_ids`, and `private_subnet_ids` from Portfolio remote state. It does not import or recreate the VPC, Internet Gateway, route table, or subnets.
+
+Waazi uses independent `waazi-mvp1-ec2-sg` and `waazi-mvp1-rds-sg` security groups. Only ports 80 and 443 are public. SSH, 8000, 5173, and 5432 are not public. PostgreSQL accepts 5432 only from the Waazi EC2 security group and is not publicly accessible.
+
+The new `modules/application_compute` module deliberately leaves the live Portfolio-specific `modules/compute` bootstrap intact. It provisions one Amazon Linux 2023 EC2 instance, encrypted 20 GiB gp3 root disk, dedicated Elastic IP, IMDSv2, SSM role/profile, Docker, Docker Compose, Git, `/opt/waazi`, and exact-ARN secret access. It does not install host Nginx, clone application code, create environment files, or run containers. The initial Waazi AMI resolves from SSM; after the first reviewed creation, record and pin that AMI before later production plans.
+
+Waazi PostgreSQL uses version `16.14`, verified through `aws rds describe-db-engine-versions` in `eu-west-1` on 2026-08-20, `db.t4g.micro`, 20 GiB initial/30 GiB maximum gp3 storage, encryption, Single-AZ, AWS-managed master credentials, and a dedicated DB subnet group over the shared private subnets. Backup retention is seven days, deletion protection is enabled, and a final snapshot is required. Seven days is an MVP recovery decision; RDS does not impose the Portfolio one-day value. Backup storage up to the applicable RDS allowance is included, while excess backup/snapshot storage is billable.
+
+Terraform creates only the `waazi-mvp1/django` and `waazi-mvp1/openai` secret containers. Populate them out of band after apply:
+
+```bash
+aws secretsmanager put-secret-value --region eu-west-1 \
+  --secret-id waazi-mvp1/django --secret-string 'REPLACE_WITH_DJANGO_SECRET_KEY'
+
+aws secretsmanager put-secret-value --region eu-west-1 \
+  --secret-id waazi-mvp1/openai --secret-string 'REPLACE_WITH_OPENAI_API_KEY'
+```
+
+Never commit the real values or place them in Terraform variables, outputs, user-data, or state.
+
+### Account plan and incremental cost
+
+The AWS Free Tier API reports account `277052498943` is on the newer active `FREE` credit plan, with `$145.08` shared account credit remaining and plan expiration at `2027-01-27T20:11:27Z` when checked on 2026-08-20. Waazi does not receive a separate allowance. Portfolio and Waazi draw from the same credits; the Free plan ends when its period expires or credits are depleted. Upgrade to a paid plan before expiration to avoid account closure and loss of access.
+
+Current AWS Price List API rates for `eu-west-1` produce this approximate incremental 730-hour month before tax, data transfer, excess CPU credits, or excess backups:
+
+| Waazi resource | Approximate monthly cost |
+| --- | ---: |
+| EC2 `t3.micro` (`$0.0114/hour`) | `$8.32` |
+| EC2 20 GiB gp3 (`$0.088/GB-month`) | `$1.76` |
+| One public IPv4 address (`$0.005/hour`) | `$3.65` |
+| RDS `db.t4g.micro` PostgreSQL Single-AZ (`$0.017/hour`) | `$12.41` |
+| RDS 20 GiB gp3 (`$0.127/GB-month`) | `$2.54` |
+| Three Secrets Manager secrets (two app plus RDS master credential) | about `$1.20` |
+| **Estimated incremental total** | **about `$29.88/month`** |
+
+The second continuously running EC2 and RDS consume additional billable service usage; they do not receive independent free instance-hour pools. Credits may absorb eligible charges while the Free plan is active. RDS burst CPU, backup storage beyond the applicable allowance, snapshots retained after deletion, traffic, and taxes are additional.
+
+### CI and state permissions
+
+Pull requests from `dev` to `main` detect changed paths. Portfolio-only changes plan Portfolio, Waazi-only changes plan Waazi, and shared module or workflow changes plan both. Plan concurrency and manual Apply concurrency are keyed by environment. Apply remains manual, requires an explicit environment choice, and only runs from `main` using GitHub OIDC; no static AWS keys are used.
+
+The intended inline state policies are checked in under `iam/`. The Plan role can read both state objects and create/read/delete only their lock files; it cannot overwrite either state object. The Apply role can read/write both selected state objects and manage only their lock files. Both can read `production/terraform.tfstate`, which Waazi needs for remote state. The currently attached Apply role already has `AdministratorAccess`; this work did not add or broaden it. Replace that pre-existing broad attachment with tested resource-level apply permissions in a separately reviewed IAM change before claiming end-to-end least privilege.
+
+After review, update the existing inline role policies out of band (this repository does not own the pre-existing OIDC roles):
+
+```bash
+aws iam put-role-policy --role-name GitHubTerraformPlanRole \
+  --policy-name PortfolioTerraformPlanStateAccess \
+  --policy-document file://iam/github-terraform-plan-state-policy.json
+
+aws iam put-role-policy --role-name GitHubTerraformApplyRole \
+  --policy-name PortfolioTerraformApplyStateAccess \
+  --policy-document file://iam/github-terraform-apply-state-policy.json
+```
+
+### Post-infrastructure deployment (do not run during Terraform work)
+
+1. Confirm the instance is online in Systems Manager.
+2. Populate the Django and OpenAI secret values.
+3. Retrieve the RDS-managed master credential.
+4. Start an SSM Session Manager session; no SSH key is provisioned.
+5. Clone Waazi securely into `/opt/waazi`.
+6. Create `/opt/waazi/.env.production` from retrieved runtime values.
+7. Verify EC2-to-RDS connectivity.
+8. Build the production containers.
+9. Run migrations and `collectstatic`.
+10. Start `docker-compose.prod.yml`.
+11. Check `/api/health/`.
+12. Configure the domain and HTTPS in a later DNS/TLS task.
+13. Run end-to-end health-assessment tests.
 
 ## Related Repository
 

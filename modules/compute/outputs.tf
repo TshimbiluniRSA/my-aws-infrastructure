@@ -45,7 +45,7 @@ output "elastic_ip_allocation_id" {
 
 output "ami_id" {
   description = "AMI ID used by the EC2 instance."
-  value       = nonsensitive(data.aws_ssm_parameter.amazon_linux_2023_ami.value)
+  value       = nonsensitive(local.ami_id)
 }
 
 output "application_policy_arn" {
