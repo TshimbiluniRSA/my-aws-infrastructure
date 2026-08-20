@@ -1,0 +1,41 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListSelectedTerraformStatePrefixes",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "production/terraform.tfstate*",
+            "waazi-mvp1/terraform.tfstate*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadSelectedTerraformStates",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate",
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/waazi-mvp1/terraform.tfstate"
+      ]
+    },
+    {
+      "Sid": "ManageSelectedTerraformLocks",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate.tflock",
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/waazi-mvp1/terraform.tfstate.tflock"
+      ]
+    }
+  ]
+}

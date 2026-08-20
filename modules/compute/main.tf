@@ -1,5 +1,11 @@
 data "aws_ssm_parameter" "amazon_linux_2023_ami" {
+  count = var.ami_id == null ? 1 : 0
+
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
+locals {
+  ami_id = var.ami_id != null ? var.ami_id : data.aws_ssm_parameter.amazon_linux_2023_ami[0].value
 }
 
 resource "aws_iam_role" "ec2" {
@@ -98,7 +104,7 @@ resource "aws_iam_instance_profile" "ec2" {
 }
 
 resource "aws_instance" "this" {
-  ami                    = data.aws_ssm_parameter.amazon_linux_2023_ami.value
+  ami                    = local.ami_id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.security_group_ids
@@ -114,7 +120,7 @@ resource "aws_instance" "this" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = var.http_put_response_hop_limit
     instance_metadata_tags      = "disabled"
   }
 

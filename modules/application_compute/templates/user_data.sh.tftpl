@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euxo pipefail
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+APPLICATION_DIRECTORY=${jsonencode(application_directory)}
+DOCKER_COMPOSE_VERSION="v5.1.4"
+DOCKER_COMPOSE_PLUGIN_DIRECTORY="/usr/local/lib/docker/cli-plugins"
+
+dnf makecache --refresh
+dnf install -y docker git
+
+if ! docker compose version >/dev/null 2>&1; then
+  install -d -m 0755 "$DOCKER_COMPOSE_PLUGIN_DIRECTORY"
+  curl -fL \
+    "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-linux-x86_64" \
+    -o "$DOCKER_COMPOSE_PLUGIN_DIRECTORY/docker-compose"
+  chmod 0755 "$DOCKER_COMPOSE_PLUGIN_DIRECTORY/docker-compose"
+fi
+
+systemctl enable --now docker
+if systemctl list-unit-files amazon-ssm-agent.service >/dev/null 2>&1; then
+  systemctl enable --now amazon-ssm-agent
+fi
+
+install -d -m 0755 "$APPLICATION_DIRECTORY"
+
+docker --version
+docker compose version
+git --version
