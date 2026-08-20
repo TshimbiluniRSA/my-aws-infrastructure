@@ -13,6 +13,18 @@ variable "instance_type" {
   type        = string
 }
 
+variable "ami_id" {
+  description = "Explicit AMI ID for the EC2 instance. When null, the latest Amazon Linux 2023 x86_64 AMI is resolved from SSM."
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition     = var.ami_id == null || can(regex("^ami-[0-9a-f]+$", var.ami_id))
+    error_message = "ami_id must be null or a valid AMI ID."
+  }
+}
+
 variable "subnet_id" {
   description = "ID of the subnet in which to launch the EC2 instance."
   type        = string
@@ -43,6 +55,17 @@ variable "enable_detailed_monitoring" {
   description = "Whether EC2 detailed monitoring is enabled."
   type        = bool
   default     = false
+}
+
+variable "http_put_response_hop_limit" {
+  description = "IMDS response hop limit for the EC2 instance."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.http_put_response_hop_limit >= 1 && var.http_put_response_hop_limit <= 64
+    error_message = "http_put_response_hop_limit must be between 1 and 64."
+  }
 }
 
 variable "application_directory" {

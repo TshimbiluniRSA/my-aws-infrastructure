@@ -44,6 +44,7 @@ module "compute" {
   name        = "portfolio-production"
   environment = var.environment
 
+  ami_id        = var.ec2_ami_id
   instance_type = var.ec2_instance_type
 
   subnet_id = module.networking.public_subnet_ids[0]
@@ -52,9 +53,10 @@ module "compute" {
     module.networking.ec2_security_group_id,
   ]
 
-  root_volume_size           = var.ec2_root_volume_size
-  enable_detailed_monitoring = var.ec2_enable_detailed_monitoring
-  application_directory      = "/opt/portfolio"
+  root_volume_size            = var.ec2_root_volume_size
+  enable_detailed_monitoring  = var.ec2_enable_detailed_monitoring
+  http_put_response_hop_limit = var.ec2_http_put_response_hop_limit
+  application_directory       = "/opt/portfolio"
 
   rds_secret_arn   = module.database.master_user_secret_arn
   s3_bucket_arn    = module.storage.bucket_arn

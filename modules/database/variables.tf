@@ -71,6 +71,12 @@ variable "skip_final_snapshot" {
   default     = true
 }
 
+variable "final_snapshot_identifier" {
+  description = "Identifier for the final snapshot when skip_final_snapshot is false."
+  type        = string
+  default     = null
+}
+
 variable "apply_immediately" {
   description = "Whether database modifications are applied immediately instead of during the maintenance window."
   type        = bool

@@ -27,6 +27,18 @@ variable "ec2_instance_type" {
   default     = "t3.micro"
 }
 
+variable "ec2_ami_id" {
+  description = "AMI ID pinned to the currently deployed production Portfolio EC2 instance."
+  type        = string
+  default     = "ami-062a8901a5ddcf280"
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^ami-[0-9a-f]+$", var.ec2_ami_id))
+    error_message = "ec2_ami_id must be a valid AMI ID."
+  }
+}
+
 variable "ec2_root_volume_size" {
   description = "Size in GiB of the EC2 root gp3 volume."
   type        = number
@@ -37,6 +49,17 @@ variable "ec2_enable_detailed_monitoring" {
   description = "Whether EC2 detailed monitoring is enabled."
   type        = bool
   default     = false
+}
+
+variable "ec2_http_put_response_hop_limit" {
+  description = "IMDS response hop limit matching the currently deployed production Portfolio EC2 instance."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.ec2_http_put_response_hop_limit >= 1 && var.ec2_http_put_response_hop_limit <= 64
+    error_message = "ec2_http_put_response_hop_limit must be between 1 and 64."
+  }
 }
 
 variable "cv_bucket_name_prefix" {

@@ -30,8 +30,9 @@ resource "aws_db_instance" "this" {
   performance_insights_enabled = false
   monitoring_interval          = 0
 
-  deletion_protection = var.deletion_protection
-  skip_final_snapshot = var.skip_final_snapshot
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
+  final_snapshot_identifier = var.final_snapshot_identifier
 
   tags = {
     Name        = "${var.name}-postgres"
@@ -44,6 +45,11 @@ resource "aws_db_instance" "this" {
     precondition {
       condition     = var.max_allocated_storage >= var.allocated_storage
       error_message = "max_allocated_storage must be greater than or equal to allocated_storage."
+    }
+
+    precondition {
+      condition     = var.skip_final_snapshot || var.final_snapshot_identifier != null
+      error_message = "final_snapshot_identifier is required when skip_final_snapshot is false."
     }
   }
 }
