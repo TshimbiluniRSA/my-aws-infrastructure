@@ -59,9 +59,9 @@ variable "postgres_backup_retention_period" {
 }
 
 variable "postgres_deletion_protection" {
-  description = "Protect Waazi PostgreSQL from deletion."
+  description = "Protect Waazi PostgreSQL from deletion. Disabled so Waazi MVP 1 can be torn down."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "postgres_skip_final_snapshot" {
