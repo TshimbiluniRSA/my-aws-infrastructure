@@ -88,3 +88,13 @@ module "database" {
   deletion_protection     = var.postgres_deletion_protection
   skip_final_snapshot     = var.postgres_skip_final_snapshot
 }
+
+module "backend_deploy_role" {
+  source = "../../modules/github_deploy_role"
+
+  role_name         = "GitHubPortfolioDeployRole"
+  environment       = var.environment
+  github_repository = "TshimbiluniRSA/Tshimbiluni-AI-powered-Portfolio"
+  github_branch     = "main"
+  instance_arn      = module.compute.instance_arn
+}

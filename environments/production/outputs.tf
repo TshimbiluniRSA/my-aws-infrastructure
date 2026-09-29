@@ -137,3 +137,8 @@ output "ec2_application_policy_arn" {
   description = "ARN of the least-privilege IAM policy attached to the EC2 application role."
   value       = module.compute.application_policy_arn
 }
+
+output "backend_deploy_role_arn" {
+  description = "ARN of the role the application repository's deploy workflow assumes through GitHub OIDC."
+  value       = module.backend_deploy_role.role_arn
+}

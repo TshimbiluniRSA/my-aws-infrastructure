@@ -158,6 +158,7 @@ SSH is not exposed. Administrative access to EC2 is performed through AWS System
 | ✅ Completed | PostgreSQL RDS                         | Runs the encrypted private production database.                                            |
 | ✅ Completed | Secrets Manager-managed RDS credential | Stores the AWS-generated database master credential.                                       |
 | ✅ Completed | EC2 IAM role                           | Provides application and Systems Manager permissions to EC2.                               |
+| 🚧 In review | Backend deploy role                    | Lets the application repository deploy to EC2 through SSM Run Command from `main` only.    |
 | ✅ Completed | EC2 instance                           | Runs the production backend on Amazon Linux 2023.                                          |
 | ✅ Completed | Elastic IP                             | Provides the backend host with a stable public IPv4 address.                               |
 | ✅ Completed | Systems Manager access                 | Provides shell administration without SSH or SSH keys.                                     |
@@ -296,6 +297,7 @@ The bucket itself is not publicly accessible.
 │   ├── database/                # PostgreSQL RDS
 │   ├── compute/                 # EC2, EIP, IAM, SSM and host bootstrap
 │   ├── storage/                 # Private application S3 storage
+│   ├── github_deploy_role/      # OIDC role for application deploys via SSM
 │   ├── secrets/                 # Reserved for future application-secret expansion
 │   └── monitoring/              # Planned logging and alarms
 └── .github/
@@ -374,10 +376,9 @@ The core production platform is now deployed: networking, private RDS, EC2, SSM,
 
 ### 🚧 Deployment Automation
 
-* Build and publish backend images automatically from reviewed application changes.
-* Remove the need for manual `git pull`, image rebuild, migration, and container restart steps.
-* Run Alembic migrations safely during deployment.
-* Add post-deployment health verification and rollback behaviour.
+* 🚧 Deploy the backend automatically when changes merge to `main`: the application repository assumes `GitHubPortfolioDeployRole` through OIDC, and SSM Run Command pulls, rebuilds, migrates, restarts and health-checks the container. The role can only send `AWS-RunShellScript` to the portfolio instance.
+* Build images in CI and publish them to a registry so the host only pulls.
+* Add automatic rollback to the previous image when post-deployment health checks fail.
 
 ### 🚧 Observability
 
