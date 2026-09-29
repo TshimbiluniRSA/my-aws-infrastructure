@@ -28,24 +28,15 @@ jobs:
         shell: bash
         run: |
           production=false
-          waazi=false
           while IFS= read -r file; do
             case "$file" in
-              modules/*|.github/workflows/terraform-plan.yml|.github/workflows/terraform-apply.yml)
-                production=true; waazi=true ;;
-              environments/production/*)
+              modules/*|environments/production/*|.github/workflows/terraform-plan.yml|.github/workflows/terraform-apply.yml)
                 production=true ;;
-              environments/waazi-mvp1/*)
-                waazi=true ;;
             esac
           done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
 
-          if [[ "$production" == true && "$waazi" == true ]]; then
-            environments='["production","waazi-mvp1"]'
-          elif [[ "$production" == true ]]; then
+          if [[ "$production" == true ]]; then
             environments='["production"]'
-          elif [[ "$waazi" == true ]]; then
-            environments='["waazi-mvp1"]'
           else
             environments='[]'
           fi

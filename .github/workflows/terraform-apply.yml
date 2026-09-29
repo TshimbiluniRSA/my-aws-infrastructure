@@ -9,7 +9,6 @@ on:
         required: true
         options:
           - production
-          - waazi-mvp1
 
 permissions:
   contents: read
