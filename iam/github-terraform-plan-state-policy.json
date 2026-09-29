@@ -9,8 +9,7 @@
       "Condition": {
         "StringLike": {
           "s3:prefix": [
-            "production/terraform.tfstate*",
-            "waazi-mvp1/terraform.tfstate*"
+            "production/terraform.tfstate*"
           ]
         }
       }
@@ -20,8 +19,7 @@
       "Effect": "Allow",
       "Action": "s3:GetObject",
       "Resource": [
-        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate",
-        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/waazi-mvp1/terraform.tfstate"
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate"
       ]
     },
     {
@@ -33,8 +31,7 @@
         "s3:DeleteObject"
       ],
       "Resource": [
-        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate.tflock",
-        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/waazi-mvp1/terraform.tfstate.tflock"
+        "arn:aws:s3:::portfolio-infrastructure-tfstate-277052498943-eu-west-1-an/production/terraform.tfstate.tflock"
       ]
     }
   ]
